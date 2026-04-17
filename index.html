@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fedora & Windows Dual Boot Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 99;
+            padding: 1rem 0;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: #667eea;
+            font-weight: 500;
+            transition: color 0.3s;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            color: #764ba2;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Step Cards */
+        .step {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .step:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Step Header */
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 1rem;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .step-title {
+            font-size: 1.8rem;
+            color: #333;
+        }
+
+        .step-description {
+            color: #666;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+
+        /* Note Box */
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 10px;
+        }
+
+        .note strong {
+            color: #856404;
+        }
+
+        /* Image Grid */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .image-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .image-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .image-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.3s;
+        }
+
+        .image-card:hover img {
+            transform: scale(1.05);
+        }
+
+        .image-caption {
+            padding: 0.75rem;
+            text-align: center;
+            background: white;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* Modal for image preview */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1001;
+            cursor: pointer;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+            box-shadow: 0 0 50px rgba(255,255,255,0.3);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: #f5576c;
+        }
+
+        /* OS Cards */
+        .os-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .os-fedora {
+            background: #3c6eb4;
+            color: white;
+        }
+
+        .os-windows {
+            background: #00a4ef;
+            color: white;
+        }
+
+        /* Final Step */
+        .final-step {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .final-step .step-title {
+            color: white;
+        }
+
+        .final-step .step-description {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .final-step .step-header {
+            border-bottom-color: rgba(255,255,255,0.3);
+        }
+
+        /* Footer */
+        .footer {
+            background: rgba(0,0,0,0.8);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        /* Scroll to top button */
+        .scroll-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: transform 0.3s;
+            z-index: 99;
+        }
+
+        .scroll-top:hover {
+            transform: scale(1.1);
+        }
+
+        .scroll-top.show {
+            display: flex;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .step {
+                padding: 1rem;
+            }
+            
+            .step-title {
+                font-size: 1.3rem;
+            }
+            
+            .step-number {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .image-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<!-- Header -->
+<header class="header">
+    <div class="header-content">
+        <div class="logo">🖥️ Fedora & Windows</div>
+        <div class="nav-links">
+            <a class="nav-link" data-step="step1">Step 1</a>
+            <a class="nav-link" data-step="step2">Step 2</a>
+            <a class="nav-link" data-step="step3">Step 3</a>
+            <a class="nav-link" data-step="step4">Step 4</a>
+            <a class="nav-link" data-step="step5">Step 5</a>
+            <a class="nav-link" data-step="final">Final</a>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <!-- Step 1 -->
+    <div class="step" id="step1">
+        <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-title">Download Required Files</div>
+        </div>
+        <div class="step-description">
+            Download Fedora ISO file and Rufus software to create a bootable USB flash drive.
+        </div>
+        <div class="os-badge os-fedora">🐧 Fedora Linux</div>
+        <div class="os-badge os-windows">🪟 Rufus</div>
+        <div class="image-grid">
+            <div class="image-card" data-img="./img/004.jpg">
+                <img src="./img/004.jpg" alt="Rufus 1" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Rufus+Setup'">
+                <div class="image-caption">Rufus - Step 1</div>
+            </div>
+            <div class="image-card" data-img="./img/005.jpg">
+                <img src="./img/005.jpg" alt="Rufus 2" onerror="this.src='https://placehold.co/600x400/764ba2/white?text=Rufus+Setup'">
+                <div class="image-caption">Rufus - Step 2</div>
+            </div>
+            <div class="image-card" data-img="./img/001.jpg">
+                <img src="./img/001.jpg" alt="Fedora 1" onerror="this.src='https://placehold.co/600x400/3c6eb4/white?text=Fedora+Download'">
+                <div class="image-caption">Fedora Download - Step 1</div>
+            </div>
+            <div class="image-card" data-img="./img/002.jpg">
+                <img src="./img/002.jpg" alt="Fedora 2" onerror="this.src='https://placehold.co/600x400/3c6eb4/white?text=Fedora+Download'">
+                <div class="image-caption">Fedora Download - Step 2</div>
+            </div>
+            <div class="image-card" data-img="./img/003.jpg">
+                <img src="./img/003.jpg" alt="Fedora 3" onerror="this.src='https://placehold.co/600x400/3c6eb4/white?text=Fedora+Download'">
+                <div class="image-caption">Fedora Download - Step 3</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step" id="step2">
+        <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-title">Boot Fedora to USB Flash Drive</div>
+        </div>
+        <div class="step-description">
+            Create a bootable USB drive with Fedora using Rufus.
+        </div>
+        <div class="image-grid">
+            <div class="image-card" data-img="./img/006.jpg">
+                <img src="./img/006.jpg" alt="Boot 1" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Boot+Process'">
+                <div class="image-caption">Boot Process - Step 1</div>
+            </div>
+            <div class="image-card" data-img="./img/007.jpg">
+                <img src="./img/007.jpg" alt="Boot 2" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Boot+Process'">
+                <div class="image-caption">Boot Process - Step 2</div>
+            </div>
+            <div class="image-card" data-img="./img/008.jpg">
+                <img src="./img/008.jpg" alt="Boot 3" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Boot+Process'">
+                <div class="image-caption">Boot Process - Step 3</div>
+            </div>
+            <div class="image-card" data-img="./img/009.jpg">
+                <img src="./img/009.jpg" alt="Boot 4" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Boot+Process'">
+                <div class="image-caption">Boot Process - Step 4</div>
+            </div>
+            <div class="image-card" data-img="./img/0010.jpg">
+                <img src="./img/0010.jpg" alt="Boot 5" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Boot+Process'">
+                <div class="image-caption">Boot Process - Step 5</div>
+            </div>
+            <div class="image-card" data-img="./img/0011.jpg">
+                <img src="./img/0011.jpg" alt="Boot 6" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Boot+Process'">
+                <div class="image-caption">Boot Process - Step 6</div>
+            </div>
+            <div class="image-card" data-img="./img/0012.jpg">
+                <img src="./img/0012.jpg" alt="Boot 7" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Boot+Process'">
+                <div class="image-caption">Boot Process - Step 7</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step" id="step3">
+        <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-title">Create Storage Partition for Fedora</div>
+        </div>
+        <div class="step-description">
+            Create a dedicated partition on your hard drive for Fedora installation.
+        </div>
+        <div class="note">
+            <strong>📝 Note:</strong> 1GB = 1024 MB. For 180GB, calculate: 180 × 1024 = 184320 MB
+        </div>
+        <div class="image-grid">
+            <div class="image-card" data-img="./img/0013.jpg">
+                <img src="./img/0013.jpg" alt="Storage 1" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Storage+Partition'">
+                <div class="image-caption">Create Storage - Step 1</div>
+            </div>
+            <div class="image-card" data-img="./img/0014.jpg">
+                <img src="./img/0014.jpg" alt="Storage 2" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Storage+Partition'">
+                <div class="image-caption">Create Storage - Step 2</div>
+            </div>
+            <div class="image-card" data-img="./img/0015.jpg">
+                <img src="./img/0015.jpg" alt="Storage 3" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Storage+Partition'">
+                <div class="image-caption">Create Storage - Step 3</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step" id="step4">
+        <div class="step-header">
+            <div class="step-number">4</div>
+            <div class="step-title">BIOS/UEFI Settings & Boot Priority</div>
+        </div>
+        <div class="step-description">
+            Access BIOS by pressing F2, F9, F10, F12, or Del during startup. Enable boot from USB and set proper boot order.
+        </div>
+        <div class="image-grid">
+            <div class="image-card" data-img="./img/0016.jpg">
+                <img src="./img/0016.jpg" alt="BIOS 1" onerror="this.src='https://placehold.co/600x400/667eea/white?text=BIOS+Settings'">
+                <div class="image-caption">BIOS Settings - Step 1</div>
+            </div>
+            <div class="image-card" data-img="./img/0017.jpg">
+                <img src="./img/0017.jpg" alt="BIOS 2" onerror="this.src='https://placehold.co/600x400/667eea/white?text=BIOS+Settings'">
+                <div class="image-caption">BIOS Settings - Step 2</div>
+            </div>
+            <div class="image-card" data-img="./img/0018.jpg">
+                <img src="./img/0018.jpg" alt="BIOS 3" onerror="this.src='https://placehold.co/600x400/667eea/white?text=BIOS+Settings'">
+                <div class="image-caption">BIOS Settings - Step 3</div>
+            </div>
+            <div class="image-card" data-img="./img/0019.jpg">
+                <img src="./img/0019.jpg" alt="BIOS 4" onerror="this.src='https://placehold.co/600x400/667eea/white?text=BIOS+Settings'">
+                <div class="image-caption">BIOS Settings - Step 4</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step" id="step5">
+        <div class="step-header">
+            <div class="step-number">5</div>
+            <div class="step-title">Install Fedora on 180GB Partition</div>
+        </div>
+        <div class="step-description">
+            Follow the Fedora installer to install the operating system on the created partition.
+        </div>
+        <div class="image-grid">
+            <div class="image-card" data-img="./img/0020.jpg">
+                <img src="./img/0020.jpg" alt="Install 1" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 1</div>
+            </div>
+            <div class="image-card" data-img="./img/0021.jpg">
+                <img src="./img/0021.jpg" alt="Install 2" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 2</div>
+            </div>
+            <div class="image-card" data-img="./img/0022.jpg">
+                <img src="./img/0022.jpg" alt="Install 3" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 3</div>
+            </div>
+            <div class="image-card" data-img="./img/0023.jpg">
+                <img src="./img/0023.jpg" alt="Install 4" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 4</div>
+            </div>
+            <div class="image-card" data-img="./img/0024.jpg">
+                <img src="./img/0024.jpg" alt="Install 5" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 5</div>
+            </div>
+            <div class="image-card" data-img="./img/0025.jpg">
+                <img src="./img/0025.jpg" alt="Install 6" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 6</div>
+            </div>
+            <div class="image-card" data-img="./img/0026.jpg">
+                <img src="./img/0026.jpg" alt="Install 7" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 7</div>
+            </div>
+            <div class="image-card" data-img="./img/0027.jpg">
+                <img src="./img/0027.jpg" alt="Install 8" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 8</div>
+            </div>
+            <div class="image-card" data-img="./img/0028.jpg">
+                <img src="./img/0028.jpg" alt="Install 9" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 9</div>
+            </div>
+            <div class="image-card" data-img="./img/0029.jpg">
+                <img src="./img/0029.jpg" alt="Install 10" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 10</div>
+            </div>
+            <div class="image-card" data-img="./img/0030.jpg">
+                <img src="./img/0030.jpg" alt="Install 11" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 11</div>
+            </div>
+            <div class="image-card" data-img="./img/0031.jpg">
+                <img src="./img/0031.jpg" alt="Install 12" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 12</div>
+            </div>
+            <div class="image-card" data-img="./img/0032.jpg">
+                <img src="./img/0032.jpg" alt="Install 13" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 13</div>
+            </div>
+            <div class="image-card" data-img="./img/0033.jpg">
+                <img src="./img/0033.jpg" alt="Install 14" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 14</div>
+            </div>
+            <div class="image-card" data-img="./img/0034.jpg">
+                <img src="./img/0034.jpg" alt="Install 15" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 15</div>
+            </div>
+            <div class="image-card" data-img="./img/0035.jpg">
+                <img src="./img/0035.jpg" alt="Install 16" onerror="this.src='https://placehold.co/600x400/667eea/white?text=Fedora+Installation'">
+                <div class="image-caption">Installation - Step 16</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final Step -->
+    <div class="step final-step" id="final">
+        <div class="step-header">
+            <div class="step-number">✓</div>
+            <div class="step-title">Dual Boot Complete!</div>
+        </div>
+        <div class="step-description">
+            After restarting your laptop, you'll see GRUB bootloader with options:
+            <br><br>
+            <strong>🪟 Option 1: Windows Boot Manager</strong> - Boot into Windows<br>
+            <strong>🐧 Option 3: Fedora</strong> - Boot into Fedora Linux<br><br>
+            Use arrow keys to select and Enter to boot. You can now enjoy both operating systems on your laptop!
+        </div>
+        <div class="image-grid">
+            <div class="image-card" data-img="./img/0036.jpg">
+                <img src="./img/0036.jpg" alt="Final Boot Menu" onerror="this.src='https://placehold.co/600x400/667eea/white?text=GRUB+Boot+Menu'">
+                <div class="image-caption">GRUB Boot Menu - Choose OS</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="footer">
+    <p>📚 Fedora & Windows Dual Boot Guide | Complete Installation Tutorial</p>
+    <p style="margin-top: 0.5rem; font-size: 0.8rem; opacity: 0.7;">Follow each step carefully for successful dual boot setup</p>
+</footer>
+
+<!-- Scroll to Top Button -->
+<button class="scroll-top" id="scrollTop">↑</button>
+
+<!-- Image Modal -->
+<div class="modal" id="imageModal">
+    <span class="modal-close">&times;</span>
+    <img id="modalImage" src="" alt="Enlarged view">
+</div>
+
+<script>
+    // Progress Bar on Scroll
+    const progressBar = document.getElementById('progressBar');
+    const scrollTopBtn = document.getElementById('scrollTop');
+    
+    function updateProgress() {
+        const windowHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const scrolled = (window.scrollY / windowHeight) * 100;
+        progressBar.style.width = scrolled + '%';
+        
+        // Show/hide scroll to top button
+        if (window.scrollY > 300) {
+            scrollTopBtn.classList.add('show');
+        } else {
+            scrollTopBtn.classList.remove('show');
+        }
+    }
+    
+    window.addEventListener('scroll', updateProgress);
+    
+    // Scroll to top functionality
+    scrollTopBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    
+    // Smooth scroll for navigation links
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const stepId = link.getAttribute('data-step');
+            const element = document.getElementById(stepId);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+    
+    // Image Modal functionality
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    const modalClose = document.querySelector('.modal-close');
+    
+    function openModal(imgSrc) {
+        modal.classList.add('active');
+        modalImg.src = imgSrc;
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeModal() {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    // Add click event to all image cards
+    document.querySelectorAll('.image-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const img = card.querySelector('img');
+            if (img && img.src) {
+                openModal(img.src);
+            }
+        });
+    });
+    
+    // Close modal when clicking close button or outside image
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+    
+    // Keyboard escape to close modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+    
+    // Animate steps when they come into view
+    const observerOptions = {
+        threshold: 0.2,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animation = 'fadeInUp 0.6s ease forwards';
+            }
+        });
+    }, observerOptions);
+    
+    document.querySelectorAll('.step').forEach(step => {
+        observer.observe(step);
+    });
+    
+    // Add animation delay to steps
+    document.querySelectorAll('.step').forEach((step, index) => {
+        step.style.animationDelay = `${index * 0.1}s`;
+    });
+    
+    // Image error handling - show placeholder
+    document.querySelectorAll('img').forEach(img => {
+        img.addEventListener('error', function() {
+            if (!this.hasAttribute('data-fallback')) {
+                this.setAttribute('data-fallback', 'true');
+                const parentCard = this.closest('.image-card');
+                if (parentCard) {
+                    const caption = parentCard.querySelector('.image-caption');
+                    const text = caption ? caption.textContent : 'Image';
+                    this.src = `https://placehold.co/600x400/667eea/white?text=${encodeURIComponent(text)}`;
+                }
+            }
+        });
+    });
+    
+    // Log welcome message
+    console.log('%c🐧 Fedora & Windows Dual Boot Guide 🪟', 'color: #667eea; font-size: 16px; font-weight: bold;');
+    console.log('Follow each step carefully for successful dual boot setup!');
+</script>
+
+</body>
+</html>
